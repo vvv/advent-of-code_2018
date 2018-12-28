@@ -1,6 +1,7 @@
 module Main where
 
-import Lib (day_1_2, getNumbers)
+import qualified Lib
 
 main :: IO ()
-main = print =<< day_1_2 <$> getNumbers
+main = lines <$> getContents >>=
+    print . Lib.d021_checksum . map Lib.d021_count
