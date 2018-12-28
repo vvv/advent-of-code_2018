@@ -1,5 +1,5 @@
 import Test.Tasty (defaultMain, testGroup)
-import Test.Tasty.HUnit (testCase, (@?=))
+import Test.Tasty.HUnit (testCase, (@?=), (@=?))
 
 import qualified Lib
 
@@ -25,5 +25,19 @@ main = defaultMain $ testGroup "Tests"
         f "aabcdd" @?= (True, False)
         f "abcdee" @?= (True, False)
         f "ababab" @?= (False, True)
-        Lib.d021_checksum [(False, False), (True, True), (False, True)] @?= 2
+        2 @=? Lib.d021_checksum [(False, False), (True, True), (False, True)]
+  , testCase "day-2_2" $ do
+        let f = Lib.d022_single_diff
+        f "fghij" "fguij" @?= Just 2
+        f "abcde" "abcde" @?= Nothing
+        f "abcde" "Abcde" @?= Just 0
+        f "ab12e" "abcde" @?= Nothing
+        (Just "fgij") @=? Lib.d022 [ "abcde"
+                                   , "fghij"
+                                   , "klmno"
+                                   , "pqrst"
+                                   , "fguij"
+                                   , "axcye"
+                                   , "wvxyz"
+                                   ]
   ]

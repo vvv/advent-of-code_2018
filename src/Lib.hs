@@ -1,13 +1,16 @@
 module Lib
   ( d011
   , d012
-  , d021_count
   , d021_checksum
+  , d021_count
+  , d022
+  , d022_single_diff
   , getNumbers
   ) where
 
 import           Data.Foldable (foldl')
 import qualified Data.Map as Map
+import           Data.Monoid (First(First), getFirst, mconcat)
 import qualified Data.Set as Set
 
 -- import Debug.Trace (trace)
@@ -62,3 +65,25 @@ d021_checksum :: Foldable t => t (Bool, Bool) -> Integer
 d021_checksum ps =
     let (x, y) = d021_counts ps
     in x*y
+
+-- | If two words differ by exactly one character at the same position,
+-- return its index.
+d022_single_diff :: Eq a => [a] -> [a] -> Maybe Int
+d022_single_diff xs ys = go Nothing $ zip3 [0..] xs ys
+  where
+    go mi [] = mi
+    go mi ((_, x, y):rest) | x == y = go mi rest        -- no difference
+    go Nothing ((i, _, _):rest)     = go (Just i) rest  -- 1st difference
+    go (Just _) _                   = Nothing           -- 2nd difference
+
+-- | Try to find a pair of words that differ by exactly one character
+-- and return their common letters.
+d022 :: Eq a => [[a]] -> Maybe [a]
+d022 [] = Nothing
+d022 (w:ws) = case getFirst . mconcat $ map (First . common w) ws of
+    Nothing -> d022 ws
+    result  -> result
+  where
+    common xs ys = case d022_single_diff xs ys of
+        Nothing -> Nothing
+        Just i -> Just $ take i xs ++ drop (i+1) xs
