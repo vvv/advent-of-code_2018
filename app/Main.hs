@@ -1,8 +1,8 @@
 module Main where
 
-import qualified Lib
+import qualified Day3 as D
 
 import Data.Foldable (foldl')
 
 main :: IO ()
-main = print . Lib.d031_countOverClaims . foldl' (flip Lib.d031_applyClaim) Lib.d031_unclaimedFabric . map Lib.d031_parseClaim =<< lines <$> getContents
+main = print . D.countOverClaims . foldl' (flip D.applyClaim) D.unclaimedFabric . map D.parseClaim =<< lines <$> getContents
