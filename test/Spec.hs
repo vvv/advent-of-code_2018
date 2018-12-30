@@ -40,4 +40,12 @@ main = defaultMain $ testGroup "Tests"
                                    , "axcye"
                                    , "wvxyz"
                                    ]
+  , testCase "day-3_1" $ do
+        Lib.d031_parseClaim "#1 @ 1,2: 3x4" @?= Lib.Claim 1 2 3 4
+        let claims = [ Lib.Claim 1 3 4 4
+                     , Lib.Claim 3 1 4 4
+                     , Lib.Claim 5 5 2 2
+                     ]
+            fabric = foldr Lib.d031_applyClaim Lib.d031_unclaimedFabric claims
+        Lib.d031_countOverClaims fabric @?= 4
   ]

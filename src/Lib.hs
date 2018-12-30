@@ -1,20 +1,34 @@
 module Lib
-  ( d011
+  (
+  -- Day 1
+    d011
   , d012
+  , getNumbers
+  -- Day 2
   , d021_checksum
   , d021_count
   , d022
   , d022_single_diff
-  , getNumbers
+  -- Day 3
+  , Claim(..)
+  , d031_applyClaim
+  , d031_countOverClaims
+  , d031_parseClaim
+  , d031_unclaimedFabric
   ) where
 
+import           Data.Array.Unboxed (UArray, accum, elems, listArray)
 import           Data.Foldable (foldl')
 import qualified Data.Map as Map
 import           Data.Monoid (First(First), getFirst, mconcat)
 import qualified Data.Set as Set
+import           Data.Word (Word32)
 
 -- import Debug.Trace (trace)
 -- import Text.Printf (printf)
+
+----------------------------------------------------------------------
+-- Day 1
 
 getNumbers :: IO [Int]
 getNumbers = map dropPlus . lines <$> getContents
@@ -66,6 +80,9 @@ d021_checksum ps =
     let (x, y) = d021_counts ps
     in x*y
 
+----------------------------------------------------------------------
+-- Day 2
+
 -- | If two words differ by exactly one character at the same position,
 -- return its index.
 d022_single_diff :: Eq a => [a] -> [a] -> Maybe Int
@@ -87,3 +104,38 @@ d022 (w:ws) = case getFirst . mconcat $ map (First . common w) ws of
     common xs ys = case d022_single_diff xs ys of
         Nothing -> Nothing
         Just i -> Just $ take i xs ++ drop (i+1) xs
+
+----------------------------------------------------------------------
+-- Day 3
+
+-- | @Claim x y w h@ is a rectangular area of fabric.
+--
+-- @x@ - the number of inches between the left edge of the fabric and
+--       the left edge of the rectangle;
+-- @y@ - the number of inches between the top edge of the fabric and
+--       the top edge of the rectangle;
+-- @w@ - the width of the rectangle in inches;
+-- @h@ - the height of the rectangle in inches.
+data Claim = Claim Word32 Word32 Word32 Word32
+  deriving (Eq, Show)
+
+type Fabric = UArray (Word32,Word32) Word32
+
+d031_unclaimedFabric :: Fabric
+d031_unclaimedFabric = listArray ((0,0), (999,999)) (repeat 0)
+
+d031_applyClaim :: Claim -> Fabric -> Fabric
+d031_applyClaim (Claim x y w h) fabric =
+    let rect = [((a, b), undefined) | a <- [x..x+w-1], b <- [y..y+h-1]]
+    in accum (const . (+1)) fabric rect
+
+d031_countOverClaims :: Fabric -> Word32
+d031_countOverClaims = fromIntegral . length . filter (> 1) . elems
+
+d031_parseClaim :: String -> Claim
+d031_parseClaim str = Claim (read x) (read y) (read w) (read h)
+  where
+    -- XXX This is ugly and fragile. Use proper parsing library.
+    (x, (',':str1)) = break (== ',') . drop 2 $ dropWhile (/= '@') str
+    (y, (':':' ':str2)) = break (== ':') str1
+    (w, ('x':h)) = break (== 'x') str2
