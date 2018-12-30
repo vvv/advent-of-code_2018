@@ -7,7 +7,14 @@ module Day3
   , state0
   ) where
 
-import           Data.Array (Array, accum, elems, listArray, indices, ixmap)
+import           Data.Array.Unboxed
+  ( UArray
+  , accum
+  , elems
+  , listArray
+  , indices
+  , ixmap
+  )
 import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Word (Word32)
@@ -40,7 +47,21 @@ instance Semigroup Square
     Claimed i <> Unclaimed = Claimed i
     _ <> _ = Overclaimed
 
-type Fabric = Array (Word32,Word32) Square
+-- We cannot use UArray with Square. We'll be unboxing Square to Int.
+
+toSquare :: Int -> Square
+toSquare x | x == 0    = Unclaimed
+           | x > 0     = Claimed (ClaimId x)
+           | otherwise = Overclaimed
+
+fromSquare :: Square -> Int
+fromSquare Unclaimed = 0
+fromSquare (Claimed (ClaimId x)) = if x > 0
+                                   then x
+                                   else error "fromSquare: Invalid argument"
+fromSquare Overclaimed = -1
+
+type Fabric = UArray (Word32,Word32) Int
 
 -- Fabric and a set of claims that don't overlap with any other claim.
 type ClaimingState = (Fabric, Set ClaimId)
@@ -53,8 +74,9 @@ applyClaim (Claim cid x y w h) (fabric, set) =
 
         rect = ixmap ((x, y), (x+w-1, y+h-1)) id fabric
         overlappedClaimIds =
-            Set.fromList [i | Just i <- toClaimId <$> elems rect]
-        fabric' = accum (<>) fabric [(idx, Claimed cid) | idx <- indices rect]
+            Set.fromList [i | Just i <- toClaimId . toSquare <$> elems rect]
+        update e e' = fromSquare (toSquare e <> e')
+        fabric' = accum update fabric [(idx, Claimed cid) | idx <- indices rect]
     in ( fabric'
        , if Set.null overlappedClaimIds
          then Set.insert cid set
@@ -62,7 +84,9 @@ applyClaim (Claim cid x y w h) (fabric, set) =
        )
 
 countOverclaimed :: Fabric -> Word32
-countOverclaimed = fromIntegral . length . filter (== Overclaimed) . elems
+countOverclaimed =
+    let isOverclaimed e = toSquare e == Overclaimed
+    in fromIntegral . length . filter isOverclaimed . elems
 
 parseClaim :: String -> Claim
 parseClaim str = Claim (ClaimId $ read i) (read x) (read y) (read w) (read h)
@@ -74,4 +98,6 @@ parseClaim str = Claim (ClaimId $ read i) (read x) (read y) (read w) (read h)
     (w, ('x':h)) = break (== 'x') str3
 
 state0 :: ClaimingState
-state0 = (listArray ((0,0), (999,999)) (repeat Unclaimed), Set.empty)
+state0 = ( listArray ((0,0), (999,999)) (repeat $ fromSquare Unclaimed)
+         , Set.empty
+         )
