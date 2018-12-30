@@ -50,5 +50,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - advent-of-code
+    - containers
     - tasty
     - tasty-hunit

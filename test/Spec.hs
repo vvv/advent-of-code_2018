@@ -1,9 +1,11 @@
-import Test.Tasty (defaultMain, testGroup)
-import Test.Tasty.HUnit (testCase, (@?=), (@=?))
+import           Test.Tasty (defaultMain, testGroup)
+import           Test.Tasty.HUnit (testCase, (@?=), (@=?))
 
 import qualified Day1 as D1
 import qualified Day2 as D2
 import qualified Day3 as D3
+
+import qualified Data.Set as Set
 
 main :: IO ()
 main = defaultMain $ testGroup "Tests"
@@ -42,12 +44,13 @@ main = defaultMain $ testGroup "Tests"
                                   , "axcye"
                                   , "wvxyz"
                                   ]
-  , testCase "day-3_1" $ do
-        D3.parseClaim "#1 @ 1,2: 3x4" @?= D3.Claim 1 2 3 4
-        let claims = [ D3.Claim 1 3 4 4
-                     , D3.Claim 3 1 4 4
-                     , D3.Claim 5 5 2 2
+  , testCase "day-3" $ do
+        D3.parseClaim "#1 @ 2,3: 4x5" @?= D3.Claim (D3.ClaimId 1) 2 3 4 5
+        let claims = [ D3.Claim (D3.ClaimId 1) 1 3 4 4
+                     , D3.Claim (D3.ClaimId 2) 3 1 4 4
+                     , D3.Claim (D3.ClaimId 3) 5 5 2 2
                      ]
-            fabric = foldr D3.applyClaim D3.unclaimedFabric claims
-        D3.countOverClaims fabric @?= 4
+            (fabric, set) = foldr D3.applyClaim D3.state0 claims
+        D3.countOverclaimed fabric @?= 4
+        set @?= Set.singleton (D3.ClaimId 3)
   ]
